@@ -1,0 +1,9 @@
+{
+    "editor.formatOnSave": true,
+    // https://github.com/hedronvision/bazel-compile-commands-extractor#vscode
+    "clangd.arguments": [
+        "--header-insertion=never",
+        "--compile-commands-dir=${workspaceFolder}/",
+        "--query-driver=**"
+    ]
+}
