@@ -1,4 +1,4 @@
-#include "p4buf.h"
+#include "buffer.h"
 
 #include <string>
 

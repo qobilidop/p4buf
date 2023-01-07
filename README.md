@@ -1,5 +1,7 @@
 # P4 Buffers
 
+Hardware-friendly P4 runtime data representation.
+
 ## Dependencies
 
 User:
@@ -16,8 +18,8 @@ TODO
 ## Development
 
 ```bash
-bazelisk build //src:p4buf
-bazelisk test //src:p4buf_test
+bazelisk build //src:type_spec
+bazelisk test //src:type_spec_test
 ```
 
 ### Hedron's Compile Commands Extractor for Bazel
