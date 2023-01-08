@@ -1,0 +1,18 @@
+// https://containers.dev/implementors/json_reference/
+{
+    "name": "p4buf",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "bazelbuild.vscode-bazel",
+                "editorconfig.editorconfig",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-azuretools.vscode-docker"
+            ]
+        }
+    }
+}
