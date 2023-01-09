@@ -4,7 +4,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Hedron's Compile Commands Extractor for Bazel
-# https://github.com/hedronvision/bazel-compile-commands-extractor
+# https://github.com/hedronvision/bazel-compile-commands-extractor (use the latest commit)
 http_archive(
     name = "hedron_compile_commands",
     sha256 = "632cf245a06f38a02eefe9764ae5ca581b74bfa106a44067665fcd99fb6babb0",
@@ -16,14 +16,39 @@ load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_
 
 hedron_compile_commands_setup()
 
+# Abseil
+# https://abseil.io/docs/cpp/quickstart.html
+# https://github.com/abseil/abseil-cpp/releases (use the latest release)
+http_archive(
+    name = "com_google_absl",
+    sha256 = "91ac87d30cc6d79f9ab974c51874a704de9c2647c40f6932597329a282217ba8",
+    strip_prefix = "abseil-cpp-20220623.1",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.1.tar.gz"],
+)
+
+# Skylib
+# https://github.com/bazelbuild/bazel-skylib/releases (use the latest release)
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+    ],
+)
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
+
 # GoogleTest
 # http://google.github.io/googletest/quickstart-bazel.html#set-up-a-bazel-workspace
-# https://github.com/google/googletest/releases/tag/release-1.12.1
+# https://github.com/google/googletest/releases (use the latest release)
 http_archive(
     name = "com_google_googletest",
-    sha256 = "24564e3b712d3eb30ac9a85d92f7d720f60cc0173730ac166f27dda7fed76cb2",
+    sha256 = "81964fe578e9bd7c94dfdb09c8e4d6e6759e19967e397dbea48d1c10e45d0df2",
     strip_prefix = "googletest-release-1.12.1",
-    urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip"],
+    urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz"],
 )
 
 # fmt
