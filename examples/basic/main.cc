@@ -31,8 +31,16 @@ int main(int argc, char *argv[]) {
 
   for (auto layout : {p4buf::Layout::compact, p4buf::Layout::byte_aligned}) {
     fmt::print("\n");
-    p4buf::Schema schema{s1_t.copy_ptr(), layout};
-    schema.print();
+    auto schema = std::make_shared<p4buf::Schema>(s1_t.copy_ptr(), layout);
+    schema->print();
+
+    p4buf::Buffer buf{schema};
+    buf.set("/s0/a", 1);
+    buf.set("/s0/b", 1);
+    buf.set("/c", 1);
+    buf.set("/d", 1);
+    fmt::print("bytes: ");
+    buf.print();
   }
 
   return 0;

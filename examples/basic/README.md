@@ -23,6 +23,7 @@ fields:
     /s0/b: { byte_offset: 0, bit_offset: 1, bitwidth: 2 }
     /c: { byte_offset: 0, bit_offset: 3, bitwidth: 3 }
     /d: { byte_offset: 0, bit_offset: 6, bitwidth: 4 }
+bytes: 10100100 01000000
 
 layout: byte aligned
 bytewidth: 4
@@ -31,4 +32,5 @@ fields:
     /s0/b: { byte_offset: 1, bit_offset: 0, bitwidth: 2 }
     /c: { byte_offset: 2, bit_offset: 0, bitwidth: 3 }
     /d: { byte_offset: 3, bit_offset: 0, bitwidth: 4 }
+bytes: 10000000 01000000 00100000 00010000
 ```

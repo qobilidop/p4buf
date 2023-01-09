@@ -112,14 +112,40 @@ class Schema {
  public:
   Schema(std::shared_ptr<const DataTypeSpec> type_spec, Layout layout);
 
+  Layout get_layout() const { return layout_; }
+  bytewidth_t get_bytewidth() const { return bytewidth_; }
+  const FieldSpec& view(std::string field_name) const {
+    return field_spec_.at(field_name);
+  }
+
   // Print this schema in a human-readable way.
   void print() const;
 
  protected:
   Layout layout_;
-  bytewidth_t bytewidth = 0;
+  bytewidth_t bytewidth_ = 0;
   std::vector<std::string> field_names_;
   std::map<std::string, FieldSpec> field_spec_;
+};
+
+class Buffer {
+ public:
+  Buffer(std::shared_ptr<const Schema> schema) : schema_(schema) {
+    data_ = std::make_unique<std::byte[]>(schema_->get_bytewidth());
+  }
+
+  bytewidth_t get_bytewidth() const { return schema_->get_bytewidth(); }
+
+  void set(std::string field_name, uint8_t value);
+
+  void set(FieldSpec spec, uint8_t value, uint8_t value_bitwidth);
+
+  // Print this buffer in a human-readable way.
+  void print() const;
+
+ protected:
+  std::shared_ptr<const Schema> schema_;
+  std::unique_ptr<std::byte[]> data_;
 };
 
 }  // namespace p4buf

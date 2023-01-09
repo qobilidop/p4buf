@@ -91,8 +91,8 @@ Schema::Schema(std::shared_ptr<const DataTypeSpec> type_spec, Layout layout)
   };
 
   visit("", type_spec);
-  bytewidth = field_spec.bit_offset == 0 ? field_spec.byte_offset
-                                         : field_spec.byte_offset + 1;
+  bytewidth_ = field_spec.bit_offset == 0 ? field_spec.byte_offset
+                                          : field_spec.byte_offset + 1;
 }
 
 void Schema::print() const {
@@ -104,7 +104,7 @@ void Schema::print() const {
       fmt::print("layout: byte aligned\n");
       break;
   }
-  fmt::print("bytewidth: {}\n", bytewidth);
+  fmt::print("bytewidth: {}\n", bytewidth_);
   fmt::print("fields:\n");
   for (const auto& name : field_names_) {
     auto field_spec = field_spec_.at(name);
@@ -112,6 +112,43 @@ void Schema::print() const {
                name, field_spec.byte_offset, field_spec.bit_offset,
                field_spec.bitwidth);
   }
+}
+
+void Buffer::set(std::string field_name, uint8_t value) {
+  set(schema_->view(field_name), value, 8);
+}
+
+void Buffer::set(FieldSpec spec, uint8_t value, uint8_t value_bitwidth) {
+  if (spec.bitwidth > value_bitwidth) {
+    auto offset = spec.bit_offset + spec.bitwidth - value_bitwidth;
+    spec.byte_offset += (offset / 8);
+    spec.bit_offset = offset % 8;
+    spec.bitwidth = value_bitwidth;
+    set(spec, value, value_bitwidth);
+  } else if (value_bitwidth > 0) {
+    std::byte mask{0}, temp{value};
+    mask = std::byte(((1 << spec.bitwidth) - 1)) << (8 - spec.bitwidth);
+    temp <<= (8 - spec.bitwidth);
+    mask >>= spec.bit_offset;
+    temp >>= spec.bit_offset;
+    data_[spec.byte_offset] &= ~mask;
+    data_[spec.byte_offset] |= temp;
+    if (spec.bit_offset + spec.bitwidth > 8) {
+      spec.byte_offset += 1;
+      spec.bitwidth = spec.bit_offset + spec.bitwidth - 8;
+      spec.bit_offset = 0;
+      value_bitwidth -= spec.bitwidth;
+      set(spec, value, value_bitwidth);
+    }
+  }
+}
+
+void Buffer::print() const {
+  bytewidth_t bytewidth = get_bytewidth();
+  for (bytewidth_t i = 0; i < bytewidth; i++) {
+    fmt::print("{:08b} ", data_[i]);
+  }
+  fmt::print("\n");
 }
 
 }  // namespace p4buf
