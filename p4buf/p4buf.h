@@ -22,6 +22,9 @@ class DataTypeSpec {
   // Whether this type has members.
   virtual bool has_members() const = 0;
 
+  // View the member name list.
+  virtual const std::vector<std::string>& view_members() const = 0;
+
   // View a readonly member spec.
   virtual std::shared_ptr<const DataTypeSpec> view(std::string name) const = 0;
 
@@ -47,6 +50,9 @@ class BitTypeSpec : public DataTypeSpec {
 
   // Implement DataTypeSpec.
   bool has_members() const { return false; }
+  const std::vector<std::string>& view_members() const {
+    return empty_member_names_;
+  }
   std::shared_ptr<const DataTypeSpec> view(std::string name) const {
     return nullptr;
   }
@@ -54,6 +60,9 @@ class BitTypeSpec : public DataTypeSpec {
     return std::make_unique<BitTypeSpec>(*this);
   }
   std::string as_string(int indent = 0) const;
+
+ protected:
+  std::vector<std::string> empty_member_names_ = {};
 };
 
 // Represent the struct type.
@@ -64,6 +73,7 @@ class StructTypeSpec : public DataTypeSpec {
 
   // Implement DataTypeSpec.
   bool has_members() const { return true; }
+  const std::vector<std::string>& view_members() const { return member_names_; }
   std::shared_ptr<const DataTypeSpec> view(std::string name) const {
     return member_spec_.at(name);
   }
@@ -82,6 +92,34 @@ class StructTypeSpec : public DataTypeSpec {
  protected:
   std::vector<std::string> member_names_;
   std::map<std::string, std::shared_ptr<DataTypeSpec>> member_spec_;
+};
+
+// Memory layouts.
+enum class Layout {
+  compact,
+  byte_aligned,
+};
+
+// FieldSpec tells the bit range of a field within a buffer.
+struct FieldSpec {
+  bytewidth_t byte_offset;
+  uint8_t bit_offset;
+  bitwidth_t bitwidth;
+};
+
+// Schema specifies the memory layout of a buffer accorrding to a type.
+class Schema {
+ public:
+  Schema(std::shared_ptr<const DataTypeSpec> type_spec, Layout layout);
+
+  // Print this schema in a human-readable way.
+  void print() const;
+
+ protected:
+  Layout layout_;
+  bytewidth_t bytewidth = 0;
+  std::vector<std::string> field_names_;
+  std::map<std::string, FieldSpec> field_spec_;
 };
 
 }  // namespace p4buf

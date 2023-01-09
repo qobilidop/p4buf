@@ -27,5 +27,13 @@ int main(int argc, char *argv[]) {
   fmt::print("P4 data type spec:\n");
   s1_t.print();
 
+  fmt::print("\nNow let's create some buffers and set all fields to 1.\n");
+
+  for (auto layout : {p4buf::Layout::compact, p4buf::Layout::byte_aligned}) {
+    fmt::print("\n");
+    p4buf::Schema schema{s1_t.copy_ptr(), layout};
+    schema.print();
+  }
+
   return 0;
 }
