@@ -1,5 +1,6 @@
 workspace(name = "p4buf")
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Hedron's Compile Commands Extractor for Bazel
@@ -23,4 +24,24 @@ http_archive(
     sha256 = "24564e3b712d3eb30ac9a85d92f7d720f60cc0173730ac166f27dda7fed76cb2",
     strip_prefix = "googletest-release-1.12.1",
     urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip"],
+)
+
+# fmt
+# https://github.com/fmtlib/fmt/tree/master/support/bazel
+git_repository(
+    name = "fmt",
+    branch = "master",
+    patch_cmds = [
+        "mv support/bazel/.bazelrc .bazelrc",
+        "mv support/bazel/.bazelversion .bazelversion",
+        "mv support/bazel/BUILD.bazel BUILD.bazel",
+        "mv support/bazel/WORKSPACE.bazel WORKSPACE.bazel",
+    ],
+    patch_cmds_win = [
+        "Move-Item -Path support/bazel/.bazelrc -Destination .bazelrc",
+        "Move-Item -Path support/bazel/.bazelversion -Destination .bazelversion",
+        "Move-Item -Path support/bazel/BUILD.bazel -Destination BUILD.bazel",
+        "Move-Item -Path support/bazel/WORKSPACE.bazel -Destination WORKSPACE.bazel",
+    ],
+    remote = "https://github.com/fmtlib/fmt",
 )

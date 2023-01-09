@@ -1,14 +1,23 @@
 #include "p4buf/p4buf.h"
 
-#include <string>
-
 namespace p4buf {
 
-StructTypeSpec::StructTypeSpec(
-    std::initializer_list<std::tuple<std::string, bitwidth_t>> l) {
-  for (auto [name, bitwidth] : l) {
-    this->add_bit(name, bitwidth);
+std::string BitTypeSpec::as_string(int indent) const {
+  return fmt::format("{:{}}bit<{}>", "", indent, bitwidth_);
+}
+
+StructTypeSpec::StructTypeSpec(const StructTypeSpec& other) {
+  for (const auto& name : other.member_names_) {
+    this->add(name, other.member_spec_.at(name)->copy_ptr());
   }
+}
+
+std::unique_ptr<DataTypeSpec> StructTypeSpec::copy_ptr() const {
+  auto copy = std::make_unique<StructTypeSpec>();
+  for (const auto& name : member_names_) {
+    copy->add(name, member_spec_.at(name)->copy_ptr());
+  }
+  return copy;
 }
 
 void StructTypeSpec::add(std::string name,
@@ -18,27 +27,23 @@ void StructTypeSpec::add(std::string name,
   member_spec_[name] = std::move(type_spec);
 }
 
-void StructTypeSpec::add_bit(std::string name, bitwidth_t bitwidth) {
+void StructTypeSpec::add(std::string name, bitwidth_t bitwidth) {
   this->add(name, std::make_unique<BitTypeSpec>(bitwidth));
 }
 
-void StructTypeSpec::add_struct(std::string name,
-                                const StructTypeSpec& type_spec) {
+void StructTypeSpec::add(std::string name, const StructTypeSpec& type_spec) {
   this->add(name, type_spec.copy_ptr());
 }
 
-class RawBuffer {
- public:
-  RawBuffer(const std::byte *data, bytewidth_t bytewidth)
-      : data_(data), bytewidth_(bytewidth) {}
-
-  RawBuffer(bytewidth_t byte_size) : bytewidth_(byte_size) {
-    data_ = new std::byte[byte_size];
+std::string StructTypeSpec::as_string(int indent) const {
+  std::string s;
+  s += fmt::format("{:{}}struct {{\n", "", indent);
+  for (const auto& name : member_names_) {
+    s += fmt::format("{} {};\n", member_spec_.at(name)->as_string(indent + 4),
+                     name);
   }
-
- protected:
-  const std::byte *data_;
-  uint8_t bytewidth_;
-};
+  s += fmt::format("{:{}}}}", "", indent);
+  return s;
+}
 
 }  // namespace p4buf

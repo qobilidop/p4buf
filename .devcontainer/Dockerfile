@@ -31,4 +31,6 @@ RUN go install github.com/bazelbuild/buildtools/buildifier@latest
 # Install other useful tools
 RUN apt-get update && apt-get install -y \
     clang-format \
+    clang-tidy \
+    clangd \
     && rm -rf /var/lib/apt/lists/*

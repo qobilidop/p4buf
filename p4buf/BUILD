@@ -2,6 +2,8 @@ cc_library(
     name = "p4buf",
     srcs = ["p4buf.cc"],
     hdrs = ["p4buf.h"],
+    visibility = ["//visibility:public"],
+    deps = ["@fmt"],
 )
 
 cc_test(

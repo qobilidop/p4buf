@@ -4,7 +4,7 @@ Hardware-friendly P4 runtime data representation.
 
 ## Usage
 
-TODO
+See the [basic example](examples/basic/).
 
 ## Development
 
