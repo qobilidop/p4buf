@@ -29,8 +29,8 @@ Use other [commands](https://marketplace.visualstudio.com/items?itemName=ms-vsco
 ### Bazel Commands
 
 ```bash
-bazelisk build //src:type_spec
-bazelisk test //src:type_spec_test
+bazelisk build //...  # Build all targets
+bazelisk test //...  # Test all targets
 ```
 
 ### Hedron's Compile Commands Extractor for Bazel

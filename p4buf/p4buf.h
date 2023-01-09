@@ -1,13 +1,5 @@
-// P4 runtime data type specs.
-//
-// For the current use case to represent action arguments, we only need bit<W>
-// and struct types.
-//
-// Reference:
-// https://github.com/p4lang/p4runtime/blob/main/proto/p4/config/v1/p4types.proto
-
-#ifndef P4BUF_TYPE_SPEC_H_
-#define P4BUF_TYPE_SPEC_H_
+#ifndef P4BUF_P4BUF_H_
+#define P4BUF_P4BUF_H_
 
 #include <functional>
 #include <initializer_list>
@@ -17,9 +9,10 @@
 #include <variant>
 #include <vector>
 
-#include "common.h"
-
 namespace p4buf {
+
+using bitwidth_t = std::size_t;
+using bytewidth_t = std::size_t;
 
 // Polymorphic class representing an arbitrary data type.
 class DataTypeSpec {
@@ -106,4 +99,4 @@ class StructTypeSpec : public DataTypeSpec {
 
 }  // namespace p4buf
 
-#endif  // P4BUF_TYPE_SPEC_H_
+#endif  // P4BUF_P4BUF_H_

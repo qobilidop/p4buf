@@ -1,4 +1,4 @@
-#include "type_spec.h"
+#include "p4buf/p4buf.h"
 
 #include <string>
 
@@ -26,5 +26,19 @@ void StructTypeSpec::add_struct(std::string name,
                                 const StructTypeSpec& type_spec) {
   this->add(name, type_spec.copy_ptr());
 }
+
+class RawBuffer {
+ public:
+  RawBuffer(const std::byte *data, bytewidth_t bytewidth)
+      : data_(data), bytewidth_(bytewidth) {}
+
+  RawBuffer(bytewidth_t byte_size) : bytewidth_(byte_size) {
+    data_ = new std::byte[byte_size];
+  }
+
+ protected:
+  const std::byte *data_;
+  uint8_t bytewidth_;
+};
 
 }  // namespace p4buf
