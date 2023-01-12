@@ -47,28 +47,28 @@ TEST(BufferTest, Buffer) {
 
 TEST(BufferTest, BufferViewCtor) {
   auto buffer = std::make_shared<Buffer>(4, 0);
-  BufferView bv0(buffer, 0, 8);
+  BitField bv0(buffer, 0, 8);
   EXPECT_EQ(bv0.buffer()->size(), 4);
   EXPECT_TRUE(buf_eq(*bv0.buffer(), {0, 0, 0, 0}));
-  EXPECT_EQ(bv0.bit_offset(), 0);
-  EXPECT_EQ(bv0.bit_width(), 8);
+  EXPECT_EQ(bv0.offset(), 0);
+  EXPECT_EQ(bv0.width(), 8);
 
-  BufferView bv1({1, 2, 3, 4});
+  BitField bv1({1, 2, 3, 4});
   EXPECT_EQ(bv1.buffer()->size(), 4);
   EXPECT_TRUE(buf_eq(*bv1.buffer(), {1, 2, 3, 4}));
-  EXPECT_EQ(bv1.bit_offset(), 0);
-  EXPECT_EQ(bv1.bit_width(), 32);
+  EXPECT_EQ(bv1.offset(), 0);
+  EXPECT_EQ(bv1.width(), 32);
 
-  BufferView bv2({1, 2, 3, 4}, 8);
+  BitField bv2({1, 2, 3, 4}, 8);
   EXPECT_EQ(bv2.buffer()->size(), 4);
   EXPECT_TRUE(buf_eq(*bv2.buffer(), {1, 2, 3, 4}));
-  EXPECT_EQ(bv2.bit_offset(), 24);
-  EXPECT_EQ(bv2.bit_width(), 8);
+  EXPECT_EQ(bv2.offset(), 24);
+  EXPECT_EQ(bv2.width(), 8);
 }
 
 TEST(BufferTest, BufferViewWriteAlignedToAligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
-  BufferView bv_to_write(buffer_to_write, 8, 16);
+  BitField bv_to_write(buffer_to_write, 8, 16);
 
   auto buffer_of_value = std::make_shared<Buffer>(
       std::initializer_list<uint8_t>{0x1a, 0x2b, 0x3c, 0x4d});
@@ -98,7 +98,7 @@ TEST(BufferTest, BufferViewWriteAlignedToUnaligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
   // 0b0000'0000, 0b0000'0000, 0b0000'0000, 0
   //         ^^^    ^^^^ ^^^^    ^^
-  BufferView bv_to_write(buffer_to_write, 5, 13);
+  BitField bv_to_write(buffer_to_write, 5, 13);
 
   auto buffer_of_value =
       std::make_shared<Buffer>(std::initializer_list<uint8_t>{
@@ -147,7 +147,7 @@ TEST(BufferTest, BufferViewWriteAlignedToUnaligned) {
 
 TEST(BufferTest, BufferViewWriteUnalignedToAligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
-  BufferView bv_to_write(buffer_to_write, 8, 16);
+  BitField bv_to_write(buffer_to_write, 8, 16);
 
   auto buffer_of_value = std::make_shared<Buffer>(
       std::initializer_list<uint8_t>{0b000'0001'1, 0b010'0010'1, 0b011'0011'1,
@@ -178,7 +178,7 @@ TEST(BufferTest, BufferViewWriteUnalignedToUnaligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
   // 0b0000'0000, 0b0000'0000, 0b0000'0000, 0
   //         ^^^    ^^^^ ^^^^    ^^
-  BufferView bv_to_write(buffer_to_write, 5, 13);
+  BitField bv_to_write(buffer_to_write, 5, 13);
 
   auto buffer_of_value =
       std::make_shared<Buffer>(std::initializer_list<uint8_t>{

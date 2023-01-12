@@ -2,7 +2,7 @@ cc_binary(
     name = "main",
     srcs = ["main.cc"],
     deps = [
-        "@fmt",
-        "@p4buf//p4buf",
+        "//p4buf:buffer",
+        "//p4buf:type_spec",
     ],
 )

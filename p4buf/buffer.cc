@@ -1,6 +1,18 @@
 #include "p4buf/buffer.h"
 
+#include <bitset>
+#include <iostream>
+
 namespace p4buf {
+
+void Buffer::print() {
+  std::cout << "bytes:";
+  for (std::size_t i = 0; i < size_; ++i) {
+    std::cout << " " << std::bitset<8>(std::to_integer<int>(data_[i]));
+  }
+  std::cout << "\n";
+}
+
 namespace internal {
 
 const std::byte kByteMask{0xff};
@@ -98,26 +110,70 @@ inline void WriteSomeBits(std::shared_ptr<Buffer> buffer,
 
 }  // namespace internal
 
-void BufferView::Write(const BufferView& value) {
-  std::size_t value_bit_offset = value.bit_offset();
-  std::size_t bit_offset = bit_offset_;
-  std::size_t bit_width = std::min(bit_width_, value.bit_width());
+BitField::BitField(std::initializer_list<uint8_t> bytes,
+                   std::optional<std::size_t> width)
+    : buffer_(std::make_shared<Buffer>(bytes)),
+      offset_(0),
+      width_(bytes.size() * 8) {
+  if (width.has_value() && width.value() < width_) {
+    offset_ = width_ - width.value();
+    width_ = width.value();
+  }
+}
+
+// TODO: Handle the more complicated case where value shares the same underlying
+// Buffer.
+void BitField::Write(const BitField& value) {
+  // Guard against empty field or value.
+  if (width_ == 0 || value.width() == 0) {
+    return;
+  }
+
+  std::size_t value_offset = value.offset();
+  std::size_t field_offset = offset_;
+  std::size_t field_width = std::min(width_, value.width());
 
   // Read and write bytes one by one.
-  while (bit_width >= 8) {
-    auto byte = internal::ReadOneByte(value.buffer(), value_bit_offset);
-    internal::WriteOneByte(buffer_, bit_offset, byte);
-    value_bit_offset += 8;
-    bit_offset += 8;
-    bit_width -= 8;
+  while (field_width >= 8) {
+    auto byte = internal::ReadOneByte(value.buffer(), value_offset);
+    internal::WriteOneByte(buffer_, field_offset, byte);
+    value_offset += 8;
+    field_offset += 8;
+    field_width -= 8;
   }
 
   // Read and write the remaining few bits.
-  if (bit_width > 0) {
+  if (field_width > 0) {
     // It's okay to read a whole byte. We just need to limit bits in write.
-    auto byte = internal::ReadOneByte(value.buffer(), value_bit_offset);
-    internal::WriteSomeBits(buffer_, bit_offset, byte, bit_width);
+    auto byte = internal::ReadOneByte(value.buffer(), value_offset);
+    internal::WriteSomeBits(buffer_, field_offset, byte, field_width);
   }
+};
+
+BufferEditor::BufferEditor(const DataTypeSpec* type_spec) {
+  std::string prefix = "";
+  std::size_t offset = 0;
+
+  std::function<void(std::string, const DataTypeSpec*)> visit;
+  visit = [this, &prefix, &offset, &visit](
+              std::string name, const DataTypeSpec* type_spec) -> void {
+    if (!type_spec->has_members()) {
+      // This is a simple bit field.
+      std::string field_name = prefix + name;
+      this->AddField(field_name, offset, type_spec->bitwidth());
+      offset += type_spec->bitwidth();
+    } else {
+      // This is a struct. Recurse into its members.
+      std::string prefix_backup = prefix;
+      prefix += (name + "/");
+      for (const auto& name : type_spec->view_members()) {
+        visit(name, type_spec->view(name).get());
+      }
+      prefix = prefix_backup;
+    }
+  };
+
+  visit("", type_spec);
 };
 
 }  // namespace p4buf

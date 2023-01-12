@@ -10,12 +10,17 @@
 #include <memory>
 #include <optional>
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
+#include "p4buf/type_spec.h"
+
 namespace p4buf {
 
 class Buffer;
-class BufferView;
+class BitField;
+class BufferEditor;
 
-// Buffer is a raw byte buffer without extra structures.
+// Buffer is a continuous array of bytes.
 class Buffer {
  public:
   // Creates a Buffer of the given size (in bytes), and an optional initial
@@ -33,6 +38,9 @@ class Buffer {
     std::memcpy(this->data(), std::data(bytes), this->size());
   }
 
+  // Prints out bytes in a human-readable format.
+  void print();
+
   // Returns a pointer to the beginning of the Buffer.
   std::byte* data() const { return data_.get(); }
 
@@ -44,58 +52,83 @@ class Buffer {
   std::size_t size_;
 };
 
-// BufferView is a bit range view of a Buffer.
-//
-// BufferView can be used to edit the underlying Buffer.
-class BufferView {
+// BitField is an editable range of bits in a Buffer.
+class BitField {
  public:
-  // Creates a BufferView from a Buffer.
-  BufferView(std::shared_ptr<Buffer> buffer, std::size_t bit_offset,
-             std::size_t bit_width)
-      : buffer_(buffer), bit_offset_(bit_offset), bit_width_(bit_width) {}
+  // Creates a BitField from a Buffer with given offset (in bits) and width (in
+  // bits).
+  BitField(std::shared_ptr<Buffer> buffer, std::size_t offset,
+           std::size_t width)
+      : buffer_(buffer), offset_(offset), width_(width) {}
 
-  // Creates a BufferView from a new Buffer with given bytes.
+  // Creates a BitField representing the given value.
   //
-  // An optional bit_width (n) could be provided to select the right-most n
-  // bits. For example, to express 9 bits of 1s, one could write:
+  // An optional width can be given to further select the last n bits. For
+  // example, to express 11 bits of 1s, one could write:
   //
-  //   auto nine_ones = BufferView({0b1, 0xff}, 9);
-  BufferView(std::initializer_list<uint8_t> bytes,
-             std::optional<std::size_t> bit_width = std::nullopt)
-      : buffer_(std::make_shared<Buffer>(bytes)),
-        bit_offset_(0),
-        bit_width_(bytes.size() * 8) {
-    if (bit_width.has_value() && bit_width.value() < bit_width_) {
-      bit_offset_ = bit_width_ - bit_width.value();
-      bit_width_ = bit_width.value();
-    }
-  }
+  //   BitField({0b111, 0xff}, 11)
+  //
+  // If the given with is larger than the bit width of the given bytes, it will
+  // be ignored.
+  BitField(std::initializer_list<uint8_t> bytes,
+           std::optional<std::size_t> width = std::nullopt);
 
-  // Writes the value (represented by another BufferView) to this BufferView.
+  // Writes the value into this BitField.
   //
-  // To understand how the write is done, imagine the two BufferViews are
-  // left-aligned, then write the overlapping range of the value into this
-  // Buffer.
+  // The value is represented by another BitField. To write, the two BitFields
+  // are first left-aligned, and then the overlapping bit range of the value is
+  // written into this BitField.
   //
-  // For example, using a binary representation and some pseudocode:
+  // For example, in binary encoding and some pseudocode, to write a 5-bit
+  // BitField:
   //
-  //   00000.Write(111) == 11100
-  //   00000.Write(1010010) == 10100
-  void Write(const BufferView& value);
+  //   00000.Write(1010) == 10100
+  //   00000.Write(101010) == 10101
+  void Write(const BitField& value);
 
   // Returns a pointer to the underlying Buffer.
   std::shared_ptr<Buffer> buffer() const { return buffer_; }
 
-  // Returns the starting bit offset of the range.
-  std::size_t bit_offset() const { return bit_offset_; }
+  // Returns the offset (in bits) of this BitField.
+  std::size_t offset() const { return offset_; }
 
-  // Returns the total number of bits in the range.
-  std::size_t bit_width() const { return bit_width_; }
+  // Returns the width (in bits) of this BitField.
+  std::size_t width() const { return width_; }
 
  private:
   std::shared_ptr<Buffer> buffer_;
-  std::size_t bit_offset_;
-  std::size_t bit_width_;
+  std::size_t offset_;
+  std::size_t width_;
+};
+
+// BufferEditor facilitates editing named BitFields of a Buffer.
+class BufferEditor {
+ public:
+  // Generates an empty BufferEditor.
+  BufferEditor() = default;
+
+  // Generates a BufferEditor from a DataTypeSpec.
+  BufferEditor(const DataTypeSpec* type_spec);
+
+  // Sets to edit the given buffer.
+  void Edit(std::shared_ptr<Buffer> buffer) { buffer_ = buffer; }
+
+  // Adds a named BitField. Could overwrite a previous one with the same name.
+  void AddField(absl::string_view name, std::size_t offset, std::size_t width) {
+    field_spec_[name] = {offset, width};
+  }
+
+  BitField GetField(absl::string_view name) {
+    auto [offset, width] = field_spec_.at(name);
+    return BitField(buffer_, offset, width);
+  };
+
+  std::shared_ptr<Buffer> buffer() { return buffer_; }
+
+ private:
+  std::shared_ptr<Buffer> buffer_;
+  absl::flat_hash_map<std::string, std::tuple<std::size_t, std::size_t>>
+      field_spec_;
 };
 
 }  // namespace p4buf

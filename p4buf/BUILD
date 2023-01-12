@@ -1,26 +1,13 @@
 cc_library(
-    name = "p4buf",
-    srcs = ["p4buf.cc"],
-    hdrs = ["p4buf.h"],
-    visibility = ["//visibility:public"],
-    deps = ["@fmt"],
-)
-
-cc_test(
-    name = "p4buf_test",
-    size = "small",
-    srcs = ["p4buf_test.cc"],
-    deps = [
-        ":p4buf",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "buffer",
     srcs = ["buffer.cc"],
     hdrs = ["buffer.h"],
     visibility = ["//visibility:public"],
+    deps = [
+        ":type_spec",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_test(
@@ -30,6 +17,24 @@ cc_test(
     deps = [
         ":buffer",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "type_spec",
+    srcs = ["type_spec.cc"],
+    hdrs = ["type_spec.h"],
+    visibility = ["//visibility:public"],
+    deps = ["@fmt"],
+)
+
+cc_test(
+    name = "type_spec_test",
+    size = "small",
+    srcs = ["type_spec_test.cc"],
+    deps = [
+        ":type_spec",
         "@com_google_googletest//:gtest_main",
     ],
 )
