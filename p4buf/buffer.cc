@@ -3,6 +3,8 @@
 #include <bitset>
 #include <iostream>
 
+#include "absl/log/check.h"
+
 namespace p4buf {
 
 void Buffer::print() {
@@ -121,17 +123,26 @@ BitField::BitField(std::initializer_list<uint8_t> bytes,
   }
 }
 
+BitField::BitField(uint8_t byte) : BitField({byte}) {}
+
+BitField BitField::operator()(size_t offset, size_t width) const {
+  CHECK(width >= 1);
+  CHECK(offset < width_ && width <= width_ - offset);
+  return BitField(buffer_, offset_ + offset, width);
+}
+
 // TODO: Handle the more complicated case where value shares the same underlying
 // Buffer.
-void BitField::Write(const BitField& value) {
-  // Guard against empty field or value.
+BitField& BitField::operator=(const BitField& value) {
+  // Guard empty field or value.
   if (width_ == 0 || value.width() == 0) {
-    return;
+    return *this;
   }
 
-  std::size_t value_offset = value.offset();
-  std::size_t field_offset = offset_;
+  // Right align the ranges
   std::size_t field_width = std::min(width_, value.width());
+  std::size_t field_offset = offset_ + width_ - field_width;
+  std::size_t value_offset = value.offset() + value.width() - field_width;
 
   // Read and write bytes one by one.
   while (field_width >= 8) {
@@ -148,6 +159,8 @@ void BitField::Write(const BitField& value) {
     auto byte = internal::ReadOneByte(value.buffer(), value_offset);
     internal::WriteSomeBits(buffer_, field_offset, byte, field_width);
   }
+
+  return *this;
 };
 
 BufferEditor::BufferEditor(const DataTypeSpec* type_spec) {
@@ -160,7 +173,7 @@ BufferEditor::BufferEditor(const DataTypeSpec* type_spec) {
     if (!type_spec->has_members()) {
       // This is a simple bit field.
       std::string field_name = prefix + name;
-      this->AddField(field_name, offset, type_spec->bitwidth());
+      this->field_spec[field_name] = {offset, type_spec->bitwidth()};
       offset += type_spec->bitwidth();
     } else {
       // This is a struct. Recurse into its members.

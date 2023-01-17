@@ -73,18 +73,27 @@ class BitField {
   BitField(std::initializer_list<uint8_t> bytes,
            std::optional<std::size_t> width = std::nullopt);
 
+  BitField(uint8_t bytes);
+  // BitField(uint16_t bytes);
+  // BitField(uint32_t bytes);
+  // BitField(uint64_t bytes);
+
+  // Gets a sub field from the given relative bit range. The bit width has to be
+  // as least 1.
+  BitField operator()(size_t offset, size_t width = 1) const;
+
   // Writes the value into this BitField.
   //
   // The value is represented by another BitField. To write, the two BitFields
-  // are first left-aligned, and then the overlapping bit range of the value is
+  // are first right-aligned, and then the overlapping bit range of the value is
   // written into this BitField.
   //
   // For example, in binary encoding and some pseudocode, to write a 5-bit
   // BitField:
   //
-  //   00000.Write(1010) == 10100
-  //   00000.Write(101010) == 10101
-  void Write(const BitField& value);
+  //   00000 = 1010 => 01010
+  //   00000 = 101010 => 01010
+  BitField& operator=(const BitField& value);
 
   // Returns a pointer to the underlying Buffer.
   std::shared_ptr<Buffer> buffer() const { return buffer_; }
@@ -104,6 +113,9 @@ class BitField {
 // BufferEditor facilitates editing named BitFields of a Buffer.
 class BufferEditor {
  public:
+  using FieldSpec =
+      std::tuple<std::size_t /* offset */, std::size_t /* width */>;
+
   // Generates an empty BufferEditor.
   BufferEditor() = default;
 
@@ -113,22 +125,17 @@ class BufferEditor {
   // Sets to edit the given buffer.
   void Edit(std::shared_ptr<Buffer> buffer) { buffer_ = buffer; }
 
-  // Adds a named BitField. Could overwrite a previous one with the same name.
-  void AddField(absl::string_view name, std::size_t offset, std::size_t width) {
-    field_spec_[name] = {offset, width};
-  }
-
-  BitField GetField(absl::string_view name) {
-    auto [offset, width] = field_spec_.at(name);
+  BitField operator[](absl::string_view name) {
+    auto [offset, width] = field_spec.at(name);
     return BitField(buffer_, offset, width);
-  };
+  }
 
   std::shared_ptr<Buffer> buffer() { return buffer_; }
 
+  absl::flat_hash_map<std::string, FieldSpec> field_spec;
+
  private:
   std::shared_ptr<Buffer> buffer_;
-  absl::flat_hash_map<std::string, std::tuple<std::size_t, std::size_t>>
-      field_spec_;
 };
 
 }  // namespace p4buf

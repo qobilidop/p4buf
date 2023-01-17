@@ -3,27 +3,14 @@ workspace(name = "p4buf")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# Hedron's Compile Commands Extractor for Bazel
-# https://github.com/hedronvision/bazel-compile-commands-extractor (use the latest commit)
-http_archive(
-    name = "hedron_compile_commands",
-    sha256 = "632cf245a06f38a02eefe9764ae5ca581b74bfa106a44067665fcd99fb6babb0",
-    strip_prefix = "bazel-compile-commands-extractor-0197fc673a1a6035078ac7790318659d7442e27e",
-    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/0197fc673a1a6035078ac7790318659d7442e27e.tar.gz",
-)
-
-load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
-
-hedron_compile_commands_setup()
-
 # Abseil
 # https://abseil.io/docs/cpp/quickstart.html
-# https://github.com/abseil/abseil-cpp/releases (use the latest release)
+# https://github.com/abseil/abseil-cpp (use the latest commit)
 http_archive(
     name = "com_google_absl",
-    sha256 = "91ac87d30cc6d79f9ab974c51874a704de9c2647c40f6932597329a282217ba8",
-    strip_prefix = "abseil-cpp-20220623.1",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.1.tar.gz"],
+    sha256 = "bc4d3d9a82a5ce56c0837f406e60fdbc7139ed4032217e61ccec4dcae8c7ecd5",
+    strip_prefix = "abseil-cpp-4b34e19765c8c03e4066f2226f7fb28d68604a1d",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/4b34e19765c8c03e4066f2226f7fb28d68604a1d.tar.gz"],
 )
 
 # Skylib
@@ -70,3 +57,16 @@ git_repository(
     ],
     remote = "https://github.com/fmtlib/fmt",
 )
+
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor (use the latest commit)
+http_archive(
+    name = "hedron_compile_commands",
+    sha256 = "632cf245a06f38a02eefe9764ae5ca581b74bfa106a44067665fcd99fb6babb0",
+    strip_prefix = "bazel-compile-commands-extractor-0197fc673a1a6035078ac7790318659d7442e27e",
+    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/0197fc673a1a6035078ac7790318659d7442e27e.tar.gz",
+)
+
+load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
+
+hedron_compile_commands_setup()

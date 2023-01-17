@@ -21,19 +21,19 @@ int main(int argc, char *argv[]) {
   // 00000000 00000000
   // abbbcccc cddddddd
   p4buf::BufferEditor editor;
-  editor.AddField("a", 0, 1);  // The first 1 bit.
-  editor.AddField("b", 1, 3);  // The next 3 bits.
-  editor.AddField("c", 4, 5);  // The next 5 bits.
-  editor.AddField("d", 9, 7);  // The last 7 bits.
+  editor.field_spec["a"] = {/* offset */ 0, /* width */ 1};
+  editor.field_spec["b"] = {1, 3};
+  editor.field_spec["c"] = {4, 5};
+  editor.field_spec["d"] = {9, 7};
 
-  // Edit the buffer.
+  // Set to edit the buffer.
   editor.Edit(buffer);
 
   // Set every bit fields to 1.
-  editor.GetField("a").Write(p4buf::BitField({0x01}, 1));
-  editor.GetField("b").Write(p4buf::BitField({0x01}, 3));
-  editor.GetField("c").Write(p4buf::BitField({0x01}, 5));
-  editor.GetField("d").Write(p4buf::BitField({0x01}, 7));
+  editor["a"] = 1;
+  editor["b"] = 1;
+  editor["c"] = 1;
+  editor["d"] = 1;
   // The buffer becomes:
   // 10010000 10000001
   // abbbcccc cddddddd
@@ -65,10 +65,10 @@ int main(int argc, char *argv[]) {
 
   // Bit fields are already defined and editable.
   editor_from_type.Edit(buffer);
-  editor_from_type.GetField("/s0/a").Write(p4buf::BitField({0b1}, 1));
-  editor_from_type.GetField("/s0/b").Write(p4buf::BitField({0b010}, 3));
-  editor_from_type.GetField("/c").Write(p4buf::BitField({0b00100}, 5));
-  editor_from_type.GetField("/d").Write(p4buf::BitField({0b0001000}, 7));
+  editor_from_type["/s0/a"] = 0b1;
+  editor_from_type["/s0/b"] = 0b10;
+  editor_from_type["/c"] = 0b100;
+  editor_from_type["/d"] = 0b1000;
   // The buffer becomes:
   // 10100010 00001000
   // abbbcccc cddddddd
