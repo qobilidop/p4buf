@@ -27,7 +27,11 @@ cc_library(
     srcs = ["type_spec.cc"],
     hdrs = ["type_spec.h"],
     visibility = ["//visibility:public"],
-    deps = ["@fmt"],
+    deps = [
+        ":utility",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_test(
@@ -38,4 +42,9 @@ cc_test(
         ":type_spec",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "utility",
+    hdrs = ["utility.h"],
 )
