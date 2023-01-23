@@ -1,5 +1,5 @@
 # P4 Buffers Basic Example
 
-```bash
+```shell
 bazelisk run :main
 ```

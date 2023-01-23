@@ -12,6 +12,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
+#include "p4buf/buffer.h"
 #include "p4buf/utility.h"
 
 namespace p4buf {
@@ -23,7 +24,7 @@ class StructTS;
 using DataTS = std::variant<Box<BitTS>, Box<StructTS>>;
 
 // Generates a bit struct from the given P4 data type spec.
-void GenerateBitStruct(const DataTS& spec);
+BufferEditor GenerateEditor(const DataTS& spec);
 
 // P4 bit type spec.
 class BitTS {
@@ -43,6 +44,8 @@ class BitTS {
 // P4 struct type spec.
 class StructTS {
  public:
+  friend BufferEditor GenerateEditor(const DataTS& spec);
+
   StructTS() = default;
   StructTS(const StructTS&) = default;
   StructTS(StructTS&&) = default;

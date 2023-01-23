@@ -9,14 +9,14 @@ namespace p4buf {
 testing::AssertionResult buf_eq(const Buffer& got, const Buffer& want) {
   if (got.size() != want.size()) {
     return testing::AssertionFailure()
-           << absl::StrFormat("Buffer sizes differ. Got: %u. Want: %u.",
+           << absl::StrFormat("Buffer size differs. Got: %u. Want: %u.",
                               got.size(), want.size());
     ;
   }
   for (std::size_t i = 0; i < got.size(); ++i) {
     if (got.data()[i] != want.data()[i]) {
       return testing::AssertionFailure() << absl::StrFormat(
-                 "The %uth bytes differ. Got: %0#04x. Want: %0#04x.", i,
+                 "The %uth byte differs. Got: %0#04x. Want: %0#04x.", i,
                  got.data()[i], want.data()[i]);
       ;
     }
@@ -25,48 +25,79 @@ testing::AssertionResult buf_eq(const Buffer& got, const Buffer& want) {
 }
 
 TEST(BufferTest, Buffer) {
-  Buffer buffer_uninit(4);
-  EXPECT_EQ(buffer_uninit.size(), 4);
-  EXPECT_FALSE(buf_eq(buffer_uninit, {0, 0, 0, 0}));
+  // Create a buffer from allocated memory.
+  std::unique_ptr<std::byte[]> data(new std::byte[4]);
+  Buffer b1(std::move(data), 4);
+  EXPECT_EQ(b1.size(), 4);
 
-  Buffer buffer(4, 1);
-  EXPECT_TRUE(buf_eq(buffer, {1, 1, 1, 1}));
+  // Create a buffer of given size, but uninitialized.
+  Buffer b2(4);
+  EXPECT_EQ(b2.size(), 4);
 
-  buffer.data()[1] = std::byte{2};
-  buffer.data()[2] = std::byte{3};
-  buffer.data()[3] = std::byte{4};
-  EXPECT_TRUE(buf_eq(buffer, {1, 2, 3, 4}));
+  // Create a buffer of given size, and initialized.
+  Buffer b3(4, 0);
+  EXPECT_TRUE(buf_eq(b3, {0, 0, 0, 0}));
 
-  std::vector<uint8_t> bytes{5, 6, 7, 8};
-  std::memcpy(buffer.data(), bytes.data(), 4);
-  EXPECT_TRUE(buf_eq(buffer, {5, 6, 7, 8}));
+  // Create a buffer from given bytes.
+  Buffer b4{0, 1, 2, 3};
+  EXPECT_TRUE(buf_eq(b4, {0, 1, 2, 3}));
 
-  Buffer buffer_from_bytes{1, 2, 3, 4};
-  EXPECT_TRUE(buf_eq(buffer_from_bytes, {1, 2, 3, 4}));
+  // Edit individual byte.
+  Buffer b5(4);
+  b5[0] = std::byte{0};
+  b5[1] = std::byte{1};
+  b5[2] = std::byte{2};
+  b5[3] = std::byte{3};
+  EXPECT_TRUE(buf_eq(b5, {0, 1, 2, 3}));
+
+  // Edit the whole buffer.
+  Buffer b6(4);
+  std::array<uint8_t, 4> bytes{0, 1, 2, 3};
+  std::memcpy(b6.data(), bytes.data(), 4);
+  EXPECT_TRUE(buf_eq(b6, {0, 1, 2, 3}));
 }
 
-TEST(BufferTest, BufferViewCtor) {
+TEST(BufferTest, BitFieldCtor) {
+  // Create bit field from existing buffer.
   auto buffer = std::make_shared<Buffer>(4, 0);
-  BitField bv0(buffer, 0, 8);
-  EXPECT_EQ(bv0.buffer()->size(), 4);
-  EXPECT_TRUE(buf_eq(*bv0.buffer(), {0, 0, 0, 0}));
-  EXPECT_EQ(bv0.offset(), 0);
-  EXPECT_EQ(bv0.width(), 8);
+  BitField bf1(buffer, 0, 8);
+  EXPECT_TRUE(buf_eq(*bf1.buffer(), {0, 0, 0, 0}));
+  EXPECT_EQ(bf1.offset(), 0);
+  EXPECT_EQ(bf1.width(), 8);
 
-  BitField bv1({1, 2, 3, 4});
-  EXPECT_EQ(bv1.buffer()->size(), 4);
-  EXPECT_TRUE(buf_eq(*bv1.buffer(), {1, 2, 3, 4}));
-  EXPECT_EQ(bv1.offset(), 0);
-  EXPECT_EQ(bv1.width(), 32);
+  // Create bit field from bytes.
+  BitField bf2({0, 1, 2, 3});
+  EXPECT_TRUE(buf_eq(*bf2.buffer(), {0, 1, 2, 3}));
+  EXPECT_EQ(bf2.offset(), 0);
+  EXPECT_EQ(bf2.width(), 32);
 
-  BitField bv2({1, 2, 3, 4}, 8);
-  EXPECT_EQ(bv2.buffer()->size(), 4);
-  EXPECT_TRUE(buf_eq(*bv2.buffer(), {1, 2, 3, 4}));
-  EXPECT_EQ(bv2.offset(), 24);
-  EXPECT_EQ(bv2.width(), 8);
+  // Create bit field from uint8_t.
+  BitField bf3(uint8_t{0x0a});
+  EXPECT_TRUE(buf_eq(*bf3.buffer(), {0x0a}));
+  EXPECT_EQ(bf3.offset(), 0);
+  EXPECT_EQ(bf3.width(), 8);
+
+  // Create bit field from uint16_t.
+  BitField bf4(uint16_t{0x0a1b});
+  EXPECT_TRUE(buf_eq(*bf4.buffer(), {0x0a, 0x1b}));
+  EXPECT_EQ(bf4.offset(), 0);
+  EXPECT_EQ(bf4.width(), 16);
+
+  // Create bit field from uint32_t.
+  BitField bf5(uint32_t{0x0a1b2c3d});
+  EXPECT_TRUE(buf_eq(*bf5.buffer(), {0x0a, 0x1b, 0x2c, 0x3d}));
+  EXPECT_EQ(bf5.offset(), 0);
+  EXPECT_EQ(bf5.width(), 32);
+
+  // Create bit field from uint64_t.
+  BitField bf6(uint64_t{0x0a1b2c3d0a1b2c3d});
+  EXPECT_TRUE(
+      buf_eq(*bf6.buffer(), {0x0a, 0x1b, 0x2c, 0x3d, 0x0a, 0x1b, 0x2c, 0x3d}));
+  EXPECT_EQ(bf6.offset(), 0);
+  EXPECT_EQ(bf6.width(), 64);
 }
 
-TEST(BufferTest, BufferViewWriteAlignedToAligned) {
+TEST(BufferTest, BitFieldWriteAlignedToAligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
   BitField bv_to_write(buffer_to_write, 8, 16);
 
@@ -94,7 +125,7 @@ TEST(BufferTest, BufferViewWriteAlignedToAligned) {
   // EXPECT_TRUE(buf_eq(*bv_to_write.buffer(), {0, 0x2b, 0x3c, 0}));
 }
 
-TEST(BufferTest, BufferViewWriteAlignedToUnaligned) {
+TEST(BufferTest, BitFieldWriteAlignedToUnaligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
   // 0b0000'0000, 0b0000'0000, 0b0000'0000, 0
   //         ^^^    ^^^^ ^^^^    ^^
@@ -145,7 +176,7 @@ TEST(BufferTest, BufferViewWriteAlignedToUnaligned) {
   // //                          ^^^    ^^^^ ^^^^    ^^
 }
 
-TEST(BufferTest, BufferViewWriteUnalignedToAligned) {
+TEST(BufferTest, BitFieldWriteUnalignedToAligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
   BitField bv_to_write(buffer_to_write, 8, 16);
 
@@ -174,7 +205,7 @@ TEST(BufferTest, BufferViewWriteUnalignedToAligned) {
   // EXPECT_TRUE(buf_eq(*bv_to_write.buffer(), {0, 0x2b, 0x3c, 0}));
 }
 
-TEST(BufferTest, BufferViewWriteUnalignedToUnaligned) {
+TEST(BufferTest, BitFieldWriteUnalignedToUnaligned) {
   auto buffer_to_write = std::make_shared<Buffer>(4, 0);
   // 0b0000'0000, 0b0000'0000, 0b0000'0000, 0
   //         ^^^    ^^^^ ^^^^    ^^

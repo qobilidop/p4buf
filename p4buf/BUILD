@@ -1,10 +1,16 @@
 cc_library(
+    name = "bit",
+    srcs = ["bit.cc"],
+    hdrs = ["bit.h"],
+)
+
+cc_library(
     name = "buffer",
     srcs = ["buffer.cc"],
     hdrs = ["buffer.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":type_spec",
+        ":bit",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
@@ -28,6 +34,7 @@ cc_library(
     hdrs = ["type_spec.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":buffer",
         ":utility",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
