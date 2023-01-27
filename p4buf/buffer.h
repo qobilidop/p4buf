@@ -18,7 +18,6 @@ namespace p4buf {
 
 class Buffer;
 class BitField;
-class BufferEditor;
 
 // Buffer owns a byte array on heap.
 class Buffer {
@@ -150,24 +149,6 @@ class BitField {
   std::shared_ptr<Buffer> buffer_ = nullptr;
   std::size_t offset_ = 0;
   std::size_t width_ = 0;
-};
-
-// Buffer editor facilitates editing a buffer with named bit
-// fields.
-class BufferEditor {
- public:
-  using FieldSpec =
-      std::tuple<std::size_t /* offset */, std::size_t /* width */>;
-
-  BufferEditor() = default;
-
-  BitField operator[](absl::string_view name) {
-    auto [offset, width] = field_spec.at(name);
-    return BitField(buffer, offset, width);
-  }
-
-  absl::flat_hash_map<std::string, FieldSpec> field_spec = {};
-  std::shared_ptr<Buffer> buffer = nullptr;
 };
 
 }  // namespace p4buf

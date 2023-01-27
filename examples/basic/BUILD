@@ -3,6 +3,6 @@ cc_binary(
     srcs = ["main.cc"],
     deps = [
         "//p4buf:buffer",
-        "//p4buf:type_spec",
+        "//p4buf:p4data",
     ],
 )

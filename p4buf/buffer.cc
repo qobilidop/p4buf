@@ -27,8 +27,7 @@ BitField::BitField(uint64_t bytes)
 }
 
 BitField& BitField::operator=(const BitField& other) {
-  // TODO: Maybe we should handle this case?
-  CHECK(buffer_ != other.buffer());
+  // TODO: Properly handle the case when 2 buffers are the same one.
 
   // Guard empty field or value.
   if (width_ == 0 || other.width() == 0) {

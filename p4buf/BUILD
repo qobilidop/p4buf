@@ -29,9 +29,9 @@ cc_test(
 )
 
 cc_library(
-    name = "type_spec",
-    srcs = ["type_spec.cc"],
-    hdrs = ["type_spec.h"],
+    name = "p4data",
+    srcs = ["p4data.cc"],
+    hdrs = ["p4data.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":buffer",
@@ -42,11 +42,11 @@ cc_library(
 )
 
 cc_test(
-    name = "type_spec_test",
+    name = "p4data_test",
     size = "small",
-    srcs = ["type_spec_test.cc"],
+    srcs = ["p4data_test.cc"],
     deps = [
-        ":type_spec",
+        ":p4data",
         "@com_google_googletest//:gtest_main",
     ],
 )
